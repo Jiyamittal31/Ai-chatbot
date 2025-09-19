@@ -1,9 +1,12 @@
-import os, json, string, joblib, numpy as np, nltk, random, webbrowser, ast
+import os, json, string, joblib, numpy as np, nltk, random, webbrowser, ast, requests
 from datetime import datetime
 from nltk.stem import WordNetLemmatizer
 from nltk.corpus import stopwords
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
+from dotenv import load_dotenv
+
+load_dotenv()  # load API keys from .env
 
 for pkg, res in [("punkt", "tokenizers/punkt"),
                  ("wordnet", "corpora/wordnet"),
@@ -66,6 +69,46 @@ class Chatbot:
         t = v.fit_transform(self.corpus)
         joblib.dump(v, vec_path); joblib.dump(t, tfidf_path); joblib.dump(self.corpus, snapshot)
         return v, t
+    def _get_weather(self, city):
+        key = os.getenv("OPENWEATHER_KEY")
+        if not key:
+            return "Weather API key missing. Add OPENWEATHER_KEY to .env"
+        try:
+            resp = requests.get(
+                "http://api.openweathermap.org/data/2.5/weather",
+                params={"q": city, "appid": key, "units": "metric"},
+                timeout=8,
+            )
+            data = resp.json()
+        except Exception:
+            return "Network error while fetching weather."
+        if resp.status_code != 200:
+            return data.get("message", "Could not fetch weather.")
+        temp = data["main"]["temp"]
+        desc = data["weather"][0]["description"]
+        hum = data["main"].get("humidity")
+        return f"Weather in {city.title()}: {temp}°C, {desc}. Humidity: {hum}%"
+
+    def _get_news(self, topic):
+        key = os.getenv("NEWSAPI_KEY")
+        if not key:
+            return "News API key missing. Add NEWSAPI_KEY to .env"
+        try:
+            resp = requests.get(
+                "https://newsapi.org/v2/everything",
+                params={"q": topic, "apiKey": key, "pageSize": 3, "language": "en"},
+                timeout=8,
+            )
+            data = resp.json()
+        except Exception:
+            return "Network error while fetching news."
+        if data.get("status") != "ok":
+            return data.get("message", "Could not fetch news.")
+        articles = data.get("articles", [])
+        if not articles:
+            return f"No news found for '{topic}'."
+        titles = [a.get("title", "No title") for a in articles]
+        return "Top headlines: " + " || ".join(titles)
 
     # safe evaluate arithmetic expressions
     def _safe_eval(self, expr):
@@ -106,8 +149,9 @@ class Chatbot:
 
     def _handle_slash_command(self, text):
         parts = text.strip().split(maxsplit=1)
-        cmd = parts[0][1:].lower()
+        cmd = parts[0][1:].lower() if parts[0].startswith("/") else parts[0].lower()
         arg = parts[1].strip() if len(parts) > 1 else ""
+
         if cmd in ("name", "botname"):
             return f"My name is {self.bot_name}."
         if cmd in ("setname", "rename"):
@@ -132,11 +176,21 @@ class Chatbot:
                 return "Unable to open the URL on this system."
         if cmd == "help":
             return ("/help, /name, /setname <name>, /time, /date, /joke, "
-                    "/calc <expr>, /open <url>, also ask normal questions.")
+                    "/calc <expr>, /open <url>, /weather <city>, /news <topic>")
         if cmd == "theme":
             if not arg: return "Usage: /theme #RRGGBB (or use Streamlit sidebar)"
             self.theme["primary_color"] = arg
             return f"Theme primary color set to {arg}"
+
+        # ---- new additions ----
+        if cmd == "weather":
+            city = arg or "Delhi"
+            return self._get_weather(city)
+        if cmd == "news":
+            topic = arg or "technology"
+            return self._get_news(topic)
+        # ------------------------
+
         return "Unknown command. Type /help for commands."
 
     def _match_intent(self, user_input):

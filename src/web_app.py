@@ -71,3 +71,6 @@ st.sidebar.markdown("- `/setname YourName`")
 st.sidebar.markdown("- `/time`, `/date`, `/joke`")
 st.sidebar.markdown("- `/calc 2+2*3`")
 st.sidebar.markdown("- `/open https://example.com`")
+
+st.write("🔹 Try commands: `/weather Delhi`, `/news sports`, `/news ai`")
+
