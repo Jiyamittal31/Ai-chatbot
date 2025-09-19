@@ -1,0 +1,8 @@
+Hello! How can I help you today?
+Hi there!
+I am a demo chatbot built with Python and NLTK.
+You can ask me about installation, usage, or how to extend me.
+I respond based on the sentences I have in my corpus.
+If you ask something I don't know, I will tell you I don't understand.
+Have a great day!
+What is your name?

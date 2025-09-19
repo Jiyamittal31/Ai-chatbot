@@ -1,0 +1,18 @@
+{
+  "greeting": {
+    "patterns": ["hello", "hi", "hey", "good morning", "good evening"],
+    "responses": ["Hello!", "Hi there!", "Hey! How can I help?"]
+  },
+  "goodbye": {
+    "patterns": ["bye", "goodbye", "see you", "take care"],
+    "responses": ["Bye! Take care.", "Goodbye!"]
+  },
+  "thanks": {
+    "patterns": ["thanks", "thank you", "thx", "thankyou"],
+    "responses": ["You're welcome!", "Happy to help!"]
+  },
+  "about": {
+    "patterns": ["what can you do", "what are your features", "help me"],
+    "responses": ["I can answer simple questions, run commands like /time, /joke, /calc and be personalized via the web UI."]
+  }
+}
